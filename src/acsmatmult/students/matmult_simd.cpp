@@ -23,35 +23,86 @@
 
 typedef union _avxd {
   __m256d val;
-  double arr[4];
+  double arr[128];
 } avxd;
+
+typedef union _avxs {
+  __m256 val;
+  float arr[128];
+} avxs;
 
 Matrix<float> multiplyMatricesSIMD(Matrix<float> a, Matrix<float> b) {
   /* REPLACE THE CODE IN THIS FUNCTION WITH YOUR OWN CODE */
   /* YOU MUST USE VECTOR EXTENSIONS HERE */
+  avxs vec_a, vec_b, res;
 
-  std::cout << "AVX2 test" << std::endl;
-
-  // Test if AVX2 works:
-  __m256d x = _mm256_set_pd(0.1, 0.2, 0.3, 0.4);
-  __m256d y = _mm256_set_pd(0.5, 0.6, 0.7, 0.8);
-
-  avxd z;
-
-  z.val = _mm256_add_pd(x, y);
-
-  for (int i = 0; i < 4; i++) {
-    std::cout << "z[" << i << "] = " << z.arr[i] << std::endl;
+  if (a.rows != b.columns){
+    return Matrix<float>(1, 1);
   }
 
-  return Matrix<float>(1, 1);
+  auto result = Matrix<float>(a.rows, b.columns);
+
+  float ind;
+  if (a.rows == 1 && a.columns == 1){
+    vec_a.val = _mm256_set1_ps(a.operator()(0, 0)); // Matrix A stored as vector
+    vec_b.val = _mm256_set1_ps(b.operator()(0, 0)); //Inserts the column of matrix b
+    res.val = _mm256_mul_ps((__m256)vec_a.val, (__m256)vec_b.val);
+    _mm256_storeu_ps((float *)&ind, res.val);
+    result(0, 0) = ind;
+    return result;
+  }
+
+  for(uint16_t i = 0; i < (uint16_t)a.rows; i++){
+    for(uint16_t j= 0; j < (uint16_t)b.columns; j++){
+      res.val = _mm256_setzero_ps(); //Set the vector to 0
+      for(uint16_t k = 0; k < (uint16_t)b.rows; k++){
+        vec_a.val = _mm256_set1_ps(a.operator()(i, k)); // Matrix A stored as vector
+        vec_b.val = _mm256_set1_ps(b.operator()(k, j)); //Inserts the column of matrix b
+        res.val = _mm256_add_ps((__m256)res.val, _mm256_mul_ps((__m256)vec_a.val, (__m256)vec_b.val)); //Finally.. multiplication of the vectors and add the result
+        _mm256_storeu_ps((float *)&result(i, j), (__m256)res.val);
+      }
+    }
+  }
+  return result;
 }
 
 Matrix<double> multiplyMatricesSIMD(Matrix<double> a,
                                   Matrix<double> b) {
   /* REPLACE THE CODE IN THIS FUNCTION WITH YOUR OWN CODE */
   /* YOU MUST USE VECTOR EXTENSIONS HERE */
-  return Matrix<double>(1, 1);
+  auto vec_a = _mm256_setzero_pd(); //Set the vector to 0
+  auto vec_b = _mm256_setzero_pd(); //Set the vector to 0
+  auto vec_matrix_res = _mm256_setzero_pd(); //Set the vector to 0
+
+  if (a.rows != b.columns){
+    return Matrix<double>(1, 1);
+  }
+
+  auto result = Matrix<double>(a.rows, b.columns);
+
+  double res;
+  if (a.rows == 1 && a.columns == 1){
+    vec_a = _mm256_set1_pd(a.operator()(0, 0)); // Matrix A stored as vector
+    vec_b = _mm256_set1_pd(b.operator()(0, 0)); //Inserts the column of matrix b
+    vec_matrix_res = _mm256_mul_pd(vec_a, vec_b);
+    _mm256_storeu_pd((double *)&res, vec_matrix_res);
+    result(0, 0) = res;
+    return result;
+  }
+
+  for(uint16_t i = 0; i < (uint16_t)a.rows; i++){
+    for(uint16_t j= 0; j < (uint16_t)b.columns; j++){
+      vec_matrix_res = _mm256_setzero_pd(); //Set the vector to 0
+      for(uint16_t k = 0; k < (uint16_t)b.rows; k++){
+        vec_a = _mm256_set1_pd(a.operator()(i, k)); // Matrix A stored as vector
+        vec_b = _mm256_set1_pd(a.operator()(k, j)); //Inserts the column of matrix b
+        vec_matrix_res = _mm256_add_pd(vec_matrix_res, _mm256_mul_pd(vec_a, vec_b)); //Finally.. multiplication of the vectors and add the result
+        _mm256_storeu_pd((double *)&res, vec_matrix_res);
+        result(i, j) = res;
+      }
+    }
+  }
+  return result;
 }
 
 /*************************************/

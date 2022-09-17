@@ -94,7 +94,7 @@ void runVectorExperiment(unsigned int min, unsigned int max, unsigned int repeat
     // Dump the initialization output
     dump(ss, fos, std::cout);
 
-    // Repeat the floats experiment repeats times.
+    // Repeat the floats experiment repeats times.`
     for (unsigned int r = 0; r < repeats; r++) {
       t.start();  // Start the timer.
       // Multiply the matrices
@@ -198,6 +198,40 @@ void runMatrixExperiment(unsigned int min, unsigned int max, unsigned int repeat
 
 void runMatrixExperimentSIMD(unsigned int min, unsigned int max, unsigned int repeats, const std::string &file_out) {
   std::cout << "SIMD matrix multiplication experiment not yet implemented." << std::endl;
+
+
+
+  for (unsigned int e = min; e < max; e++) {
+  // In this experiment, we use powers of 2 as the problem size.
+  // Not that that is not always necessary. You may also linearly grow the problem size.
+  // Shift a long value of 1 left by e, which is the same as 2^e, to obtain the matrix dimension
+  auto mat_rows = 1ul << e;
+  // Number of columns is 1 for now, because we just want to calculate the inner product.
+  auto mat_cols = 1ul << e;
+
+  auto mat_a = Matrix<float>(mat_rows, mat_cols);  // Make a matrix
+  auto mat_b = Matrix<float>(mat_rows, mat_cols);  // And another one
+  printf("Matrix init \n\n");
+  mat_a.randomize();
+  mat_b.randomize();
+
+  mat_a.print();
+  mat_b.print();
+
+  printf("Matrix result \n\n");
+
+  auto res = multiplyMatricesSIMD(mat_a, mat_b);
+  auto mat_result = Matrix<float>::multiply(mat_a, mat_b);
+  printf("Matrix correct: ");
+  mat_result.print();
+  printf("Matrix new: ");
+  res.print();
+  
+  }
+
+  // auto res2 = multiplyMatricesSIMD(mat_c, mat_d);
+  // res2.print();
+
 }
 
 void runMatrixExperimentOMP(unsigned int min,
