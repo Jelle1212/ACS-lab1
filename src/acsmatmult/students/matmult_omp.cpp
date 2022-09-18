@@ -24,17 +24,32 @@
 Matrix<float> multiplyMatricesOMP(Matrix<float> a,
                                   Matrix<float> b,
                                   int num_threads) {
+      
   /* REPLACE THE CODE IN THIS FUNCTION WITH YOUR OWN CODE */
   /* YOU MUST USE OPENMP HERE */
+  uint32_t n = a.rows;
+  
+  auto result = Matrix<float>(n, n);
 
-  std::cout << "OpenMP test, brace for impact!" << std::endl;
+  float *A = &a[0];
+  float *B = &b[0];
+  float *R = &result[0];
 
-  // Test if OpenMP works:
-#pragma omp parallel for
-  for (int i = 0; i < 8; i++) {
-    std::cout << "Hello World " << "from thread " << omp_get_thread_num() << std::endl;
+  uint32_t i, j, k;
+  omp_set_num_threads(num_threads);
+  #pragma omp parrallel shared(i, j, k)
+  #pragma omp for
+  for(i = 0; i < n; i++){
+    for(j = 0; j < n; j++){
+      for(k = 0; k <n; k++){
+        #pragma omp atomic
+        R[i*n + j] += A[i*n + k] * B[k*n +j];
+      }
+    }
   }
-  return Matrix<float>(1, 1);
+
+
+  return result;
 }
 
 Matrix<double> multiplyMatricesOMP(Matrix<double> a,
@@ -42,6 +57,20 @@ Matrix<double> multiplyMatricesOMP(Matrix<double> a,
                                    int num_threads) {
   /* REPLACE THE CODE IN THIS FUNCTION WITH YOUR OWN CODE */
   /* YOU MUST USE OPENMP HERE */
-  return Matrix<double>(1, 1);
+  auto result = Matrix<double>(a.rows, b.columns);
+
+  uint32_t i, j, k;
+
+  #pragma omp parrallel for shared(a, b, result) private(i, j, k) schedule(static) num_threads(num_threads)
+  {
+    for(i = 0; i < a.rows; i++){
+      for(j = 0; j < b.rows; j++){
+        for(k = 0; k <b.columns; k++){
+          result(i, j) += a(i, k) * b(k, j);
+        }
+      }
+    }
+  }
+  return result;
 }
 #pragma GCC pop_options

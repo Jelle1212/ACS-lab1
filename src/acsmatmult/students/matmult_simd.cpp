@@ -38,7 +38,7 @@ Matrix<float> multiplyMatricesSIMD(Matrix<float> a, Matrix<float> b) {
   /* YOU MUST USE VECTOR EXTENSIONS HERE */
   auto result = Matrix<float>(a.rows, b.columns);
   alignas(32) float num;
-
+  
   avxs res;
 
   for(uint16_t i = 0; i < (uint16_t)a.rows; i++){
