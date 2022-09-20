@@ -294,7 +294,6 @@ void runMatrixExperimentOMP(unsigned int min,
   // result.print();
   // test.print();
 
-
   std::ofstream fos(file_out);
   if (!fos.good()) {
     std::cerr << "Could not open file " + file_out << std::endl;
@@ -307,7 +306,7 @@ void runMatrixExperimentOMP(unsigned int min,
   Timer t;
   // Dump a header
   generateHeader(ss,
-                 {"Experiment", "Matrix size", "Construct (s)", "Randomize (s)"},
+                 {"Experiment", "Threads","Matrix size", "Construct (s)", "Randomize (s)"},
                  {"Float", "Double"},
                  repeats);
   dump(ss, fos, std::cout);
@@ -320,9 +319,11 @@ void runMatrixExperimentOMP(unsigned int min,
     auto mat_rows = 1ul << e;
     // Number of columns is 1 for now, because we just want to calculate the inner product.
     auto mat_cols = 1ul << e;
-
     // Print experiment number
     ss << std::setw(15) << (std::to_string(e) + ",");
+    // Print number of threads
+    ss << std::setw(15) << (std::to_string(threads) + ",");
+
 
     // Print the problem size
     ss << std::setw(15) << (std::to_string(mat_rows) + ",") << std::flush;
