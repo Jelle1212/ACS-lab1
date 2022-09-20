@@ -283,16 +283,16 @@ void runMatrixExperimentOMP(unsigned int min,
                             const std::string &file_out) {
   std::cout << "OpenMP matrix multiplication experiment implemented." << std::endl;
 
-  auto mat_a = Matrix<float>(2, 2);  // Make a matrix
-  auto mat_b = Matrix<float>(2,2);  // And another one, transposed.
+  // auto mat_a = Matrix<float>(2, 2);  // Make a matrix
+  // auto mat_b = Matrix<float>(2,2);  // And another one, transposed.
 
-  mat_a.randomize();
-  mat_b.randomize();
+  // mat_a.randomize();
+  // mat_b.randomize();
 
-  auto result = Matrix<float>::multiply(mat_a, mat_b);
-  auto test = multiplyMatricesOMP(mat_a, mat_b, threads);
-  result.print();
-  test.print();
+  // auto result = Matrix<float>::multiply(mat_a, mat_b);
+  // auto test = multiplyMatricesOMP(mat_a, mat_b, threads);
+  // result.print();
+  // test.print();
 
 
   std::ofstream fos(file_out);
