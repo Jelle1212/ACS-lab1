@@ -31,24 +31,23 @@ Matrix<float> multiplyMatricesOMP(Matrix<float> a,
   
   auto result = Matrix<float>(n, n);
 
-  float *A = &a[0];
-  float *B = &b[0];
-  float *R = &result[0];
+  // float *A = &a[0];
+  // float *B = &b[0];
+  // float *R = &result[0];
 
   uint32_t i, j, k;
   omp_set_num_threads(num_threads);
-  #pragma omp parrallel shared(i, j, k)
-  #pragma omp for
-  for(i = 0; i < n; i++){
-    for(j = 0; j < n; j++){
-      for(k = 0; k <n; k++){
-        #pragma omp atomic
-        R[i*n + j] += A[i*n + k] * B[k*n +j];
+  #pragma omp parrallel
+  {
+    #pragma omp for
+    for(i = 0; i < n; i++){
+      for(j = 0; j < n; j++){
+        for(k = 0; k <n; k++){
+          result(i, j) += a(i, k) * b(k, j);
+        }
       }
     }
-  }
-
-
+  }  
   return result;
 }
 
