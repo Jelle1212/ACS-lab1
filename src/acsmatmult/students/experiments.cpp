@@ -281,7 +281,7 @@ void runMatrixExperimentOMP(unsigned int min,
                             unsigned int threads,
                             unsigned int repeats,
                             const std::string &file_out) {
-  std::cout << "OpenMP matrix multiplication experiment implemented." << std::endl;
+  std::cout << "OpenMP matrix multiplication experiment implemented for number of threads: " << threads << "." << std::endl;
 
   // auto mat_a = Matrix<float>(2, 2);  // Make a matrix
   // auto mat_b = Matrix<float>(2,2);  // And another one, transposed.
