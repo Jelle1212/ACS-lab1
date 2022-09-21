@@ -26,10 +26,10 @@ void transposeMatrixFloat(Matrix<float> *src, Matrix<float> *dst) {
   uint32_t col = src -> columns;
   uint32_t n =  row * col;
 
-  for(i = 0; i < n; i++){
-    uint32_t i = n/row;
-    uint32_t j = n%row;
-    dst[n] = src[col*j +i];
+  for(uint32_t i = 0; i < n; i++){
+    uint32_t j = n/row;
+    uint32_t k = n%row;
+    dst[n] = src[col*k +j];
   }
   return;
 }
@@ -40,10 +40,10 @@ void transposeMatrixDouble(Matrix<double> *src, Matrix<double> *dst) {
   uint32_t n =  row * col;
 
 
-  for(i = 0; i < n; i++){
-    uint32_t i = n/row;
-    uint32_t j = n%row;
-    dst[n] = src[col*j +i];
+  for(uint32_t i = 0; i < n; i++){
+    uint32_t j = n/row;
+    uint32_t k = n%row;
+    dst[n] = src[col*k +j];
   }
   return;
 }
