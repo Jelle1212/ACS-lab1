@@ -21,6 +21,56 @@
 #pragma GCC optimize ("O0")
 /*************************************/
 
+void transposeMatrixFloat(Matrix<float> *src, Matrix<float> *dst) {
+  uint32_t row = src->rows;
+  uint32_t col = src -> columns;
+  uint32_t n =  row * col;
+
+  for(i = 0; i < n; i++){
+    uint32_t i = n/row;
+    uint32_t j = n%row;
+    dst[n] = src[col*j +i];
+  }
+  return;
+}
+
+void transposeMatrixDouble(Matrix<double> *src, Matrix<double> *dst) {
+  uint32_t row = src->rows;
+  uint32_t col = src -> columns;
+  uint32_t n =  row * col;
+
+
+  for(i = 0; i < n; i++){
+    uint32_t i = n/row;
+    uint32_t j = n%row;
+    dst[n] = src[col*j +i];
+  }
+  return;
+}
+
+Matrix<float> multiplyMatricesOMP_1(Matrix<float> a,
+                                  Matrix<float> b,
+                                  int num_threads) {
+      
+  /* REPLACE THE CODE IN THIS FUNCTION WITH YOUR OWN CODE */
+  /* YOU MUST USE OPENMP HERE */
+  uint32_t n = a.rows;
+  auto result = Matrix<float>(n, n);
+  auto b_new = Matrix<float>(n, n);
+
+  transposeMatrixFloat(&b, &b_new); //transpose matrix B
+  
+  uint32_t i, j;
+  omp_set_num_threads(num_threads);
+  #pragma omp parallel for shared(result) private(i, j)
+  for(i = 0; i < n; i++){
+    for(j = 0; j < n; j++){
+      result(i, j) += a(i, j) * b_new(i, j);
+    }
+  }
+  return result;
+}
+
 Matrix<float> multiplyMatricesOMP(Matrix<float> a,
                                   Matrix<float> b,
                                   int num_threads) {
@@ -28,7 +78,6 @@ Matrix<float> multiplyMatricesOMP(Matrix<float> a,
   /* REPLACE THE CODE IN THIS FUNCTION WITH YOUR OWN CODE */
   /* YOU MUST USE OPENMP HERE */
   uint32_t n = a.rows;
-  
   auto result = Matrix<float>(n, n);
   
   uint32_t i, j, k;
