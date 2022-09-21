@@ -290,7 +290,7 @@ void runMatrixExperimentOMP(unsigned int min,
   mat_b.randomize();
 
   auto result = Matrix<float>::multiply(mat_a, mat_b);
-  auto test = multiplyMatricesOMP(mat_a, mat_b, threads);
+  auto test = multiplyMatricesOMP_1(mat_a, mat_b, threads);
   result.print();
   test.print();
 
