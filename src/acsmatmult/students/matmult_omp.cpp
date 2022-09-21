@@ -21,9 +21,9 @@
 #pragma GCC optimize ("O0")
 /*************************************/
 
-void transposeMatrixFloat(Matrix<float> *src, Matrix<float> *dst) {
-  uint32_t row = src->rows;
-  uint32_t col = src -> columns;
+void transposeMatrixFloat(Matrix<float> src, Matrix<float> dst) {
+  uint32_t row = src.rows;
+  uint32_t col = src.columns;
   uint32_t n =  row * col;
 
   for(uint32_t i = 0; i < n; i++){
