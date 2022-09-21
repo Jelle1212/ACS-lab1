@@ -34,15 +34,16 @@ void transposeMatrixFloat(Matrix<float> *src, Matrix<float> *dst) {
   return;
 }
 
-void transposeMatrixDouble(Matrix<double> *src, Matrix<double> *dst) {
-  uint32_t row = src->rows;
-  uint32_t col = src -> columns;
+void transposeMatrixDouble(Matrix<double> src, Matrix<double> dst) {
+  uint32_t row = src.rows;
+  uint32_t col = src.columns;
   uint32_t n =  row * col;
 
 
   for(uint32_t i = 0; i < n; i++){
     uint32_t j = n/row;
     uint32_t k = n%row;
+    printf("test: %f", src[col*k +j]);
     dst[n] = src[col*k +j];
   }
   return;
@@ -58,7 +59,7 @@ Matrix<float> multiplyMatricesOMP(Matrix<float> a,
   auto result = Matrix<float>(n, n);
   auto b_new = Matrix<float>(n, n);
 
-  transposeMatrixFloat(&b, &b_new); //transpose matrix B
+  transposeMatrixFloat(b, b_new); //transpose matrix B
   
   uint32_t i, j;
   omp_set_num_threads(num_threads);
