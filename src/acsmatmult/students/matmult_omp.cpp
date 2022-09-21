@@ -59,7 +59,7 @@ Matrix<float> multiplyMatricesOMP(Matrix<float> a,
   auto result = Matrix<float>(n, n);
   auto b_new = Matrix<float>(n, n);
 
-  transposeMatrixFloat(&b, &b_new); //transpose matrix B
+  transposeMatrixFloat(b, b_new); //transpose matrix B
   
   uint32_t i, j;
   omp_set_num_threads(num_threads);
