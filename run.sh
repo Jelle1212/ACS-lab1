@@ -16,4 +16,4 @@
 module use /opt/insy/modulefiles
 module load cuda/11.5
 
-srun run debug./acsmatmult -h
+srun run debug/./acsmatmult -h
