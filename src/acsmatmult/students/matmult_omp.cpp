@@ -21,33 +21,33 @@
 #pragma GCC optimize ("O0")
 /*************************************/
 
-void transposeMatrixFloat(Matrix<float> src, Matrix<float> dst) {
-  uint32_t row = src.rows;
-  uint32_t col = src.columns;
-  uint32_t n =  row * col;
+// void transposeMatrixFloat(Matrix<float> src, Matrix<float> dst) {
+//   uint32_t row = src.rows;
+//   uint32_t col = src.columns;
+//   uint32_t n =  row * col;
 
-  for(uint32_t i = 0; i < n; i++){
-    uint32_t j = n/row;
-    uint32_t k = n%row;
-    dst[n] = src[col*k +j];
-  }
-  return;
-}
+//   for(uint32_t i = 0; i < n; i++){
+//     uint32_t j = n/row;
+//     uint32_t k = n%row;
+//     dst[n] = src[col*k +j];
+//   }
+//   return;
+// }
 
-void transposeMatrixDouble(Matrix<double> src, Matrix<double> dst) {
-  uint32_t row = src.rows;
-  uint32_t col = src.columns;
-  uint32_t n =  row * col;
+// void transposeMatrixDouble(Matrix<double> src, Matrix<double> dst) {
+//   uint32_t row = src.rows;
+//   uint32_t col = src.columns;
+//   uint32_t n =  row * col;
 
 
-  for(uint32_t i = 0; i < n; i++){
-    uint32_t j = n/row;
-    uint32_t k = n%row;
-    printf("test: %f", src[col*k +j]);
-    dst[n] = src[col*k +j];
-  }
-  return;
-}
+//   for(uint32_t i = 0; i < n; i++){
+//     uint32_t j = n/row;
+//     uint32_t k = n%row;
+//     printf("test: %f", src[col*k +j]);
+//     dst[n] = src[col*k +j];
+//   }
+//   return;
+// }
 
 Matrix<float> multiplyMatricesOMP(Matrix<float> a,
                                   Matrix<float> b,
@@ -55,18 +55,32 @@ Matrix<float> multiplyMatricesOMP(Matrix<float> a,
       
   /* REPLACE THE CODE IN THIS FUNCTION WITH YOUR OWN CODE */
   /* YOU MUST USE OPENMP HERE */
-  uint32_t n = a.rows;
-  auto result = Matrix<float>(n, n);
-  auto b_new = Matrix<float>(n, n);
+  uint32_t N = a.rows;
+  auto result = Matrix<float>(N, N);
+  // auto b_tran = Matrix<float>(N, N);
 
-  transposeMatrixFloat(b, b_new); //transpose matrix B
-  
-  uint32_t i, j;
+  // for(uint32_t n = 0; n < (N*N); n++) {
+  //     uint32_t i = n/N;
+  //     uint32_t j = n%N;
+  //     b_tran[n] = b[N*j + i];
+  // }
+
+  // printf("A: ");
+  // a.print();
+  // printf("B: ");
+  // b.print();
+  // printf("B^t: ");
+  // b_tran.print();
+  uint32_t i, j, k;
   omp_set_num_threads(num_threads);
-  #pragma omp parallel for shared(result) private(i, j)
-  for(i = 0; i < n; i++){
-    for(j = 0; j < n; j++){
-      result(i, j) += a(i, j) * b_new(i, j);
+  #pragma omp parallel for shared(result) private(i, j, k)
+  for(i = 0; i < N; i++){
+    for(j = 0; j < N; j++){
+      float val = 0;
+      for(k = 0; k <N; k++){
+        val += a[i * N + k] * b[k * N + j];
+      }
+      result[i *N + j] = val;
     }
   }
   return result;
