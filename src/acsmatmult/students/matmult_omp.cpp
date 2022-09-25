@@ -14,6 +14,9 @@
 
 #include "acsmatmult/matmult.h"
 #include <omp.h>  // OpenMP support.
+#include <vector>
+#include <immintrin.h>  // Intel intrinsics for SSE/AVX.
+
 
 /* You may not remove these pragmas: */
 /*************************************/
@@ -21,70 +24,32 @@
 #pragma GCC optimize ("O0")
 /*************************************/
 
-// void transposeMatrixFloat(Matrix<float> src, Matrix<float> dst) {
-//   uint32_t row = src.rows;
-//   uint32_t col = src.columns;
-//   uint32_t n =  row * col;
 
-//   for(uint32_t i = 0; i < n; i++){
-//     uint32_t j = n/row;
-//     uint32_t k = n%row;
-//     dst[n] = src[col*k +j];
-//   }
-//   return;
-// }
+void do_block_float(int si, int sj, int sk, float* A, float* B, float* C, int N, int BLOCK_SIZE)
+{
+    for (int i = si; i < si + BLOCK_SIZE; i++) {
+        for (int j = sj; j < sj + BLOCK_SIZE; j++) {
+            float cij = C[i + N * j];
+            for (int k = sk; k < sk + BLOCK_SIZE; k++) {
+                cij += A[i + N * k] * B[k + N * j];
+            }
+            C[i + N * j] = cij;
+        }
+    }
+}
 
-// void transposeMatrixDouble(Matrix<double> src, Matrix<double> dst) {
-//   uint32_t row = src.rows;
-//   uint32_t col = src.columns;
-//   uint32_t n =  row * col;
-
-
-//   for(uint32_t i = 0; i < n; i++){
-//     uint32_t j = n/row;
-//     uint32_t k = n%row;
-//     printf("test: %f", src[col*k +j]);
-//     dst[n] = src[col*k +j];
-//   }
-//   return;
-// }
-
-// Matrix<float> multiplyMatricesOMP(Matrix<float> a,
-//                                   Matrix<float> b,
-//                                   int num_threads) {
-      
-  /* REPLACE THE CODE IN THIS FUNCTION WITH YOUR OWN CODE */
-  /* YOU MUST USE OPENMP HERE */
-  // uint32_t N = a.rows;
-  // auto result = Matrix<float>(N, N);
-  // auto b_tran = Matrix<float>(N, N);
-
-  // for(uint32_t n = 0; n < (N*N); n++) {
-  //     uint32_t i = n/N;
-  //     uint32_t j = n%N;
-  //     b_tran[n] = b[N*j + i];
-  // }
-
-  // printf("A: ");
-  // a.print();
-  // printf("B: ");
-  // b.print();
-  // printf("B^t: ");
-  // b_tran.print();
-//   uint32_t i, j, k;
-//   omp_set_num_threads(num_threads);
-//   #pragma omp parallel for shared(result) private(i, j, k)
-//   for(i = 0; i < N; i++){
-//     for(j = 0; j < N; j++){
-//       float val = 0;
-//       for(k = 0; k <N; k++){
-//         val += a[i * N + k] * b[k * N + j];
-//       }
-//       result[i *N + j] = val;
-//     }
-//   }
-//   return result;
-// }
+void do_block_double(int si, int sj, int sk, double* A, double* B, double* C, int N, int BLOCK_SIZE)
+{
+    for (int i = si; i < si + BLOCK_SIZE; i++) {
+        for (int j = sj; j < sj + BLOCK_SIZE; j++) {
+            double cij = C[i + N * j];
+            for (int k = sk; k < sk + BLOCK_SIZE; k++) {
+                cij += A[i + N * k] * B[k + N * j];
+            }
+            C[i + N * j] = cij;
+        }
+    }
+}
 
 Matrix<float> multiplyMatricesOMP(Matrix<float> a,
                                   Matrix<float> b,
@@ -108,6 +73,8 @@ Matrix<float> multiplyMatricesOMP(Matrix<float> a,
   return result;
 }
 
+
+
 Matrix<double> multiplyMatricesOMP(Matrix<double> a,
                                    Matrix<double> b,
                                    int num_threads) {
@@ -128,3 +95,59 @@ Matrix<double> multiplyMatricesOMP(Matrix<double> a,
     return result;
   }
 #pragma GCC pop_options
+
+// Matrix<float> multiplyMatricesOMP(Matrix<float> a,
+//                                   Matrix<float> b,
+//                                   int num_threads) {
+      
+//   uint32_t n = a.rows;
+//   int BLOCK_SIZE = n;
+//   if (n >= 32) {
+//     BLOCK_SIZE = 32;
+//   }
+//   auto result = Matrix<float>(n, n);
+//   float *A = &a[0];
+//   float *B = &b[0];
+//   float *C = &result[0];
+//   uint32_t i, j, k;
+//   omp_set_num_threads(num_threads);
+//   #pragma omp parallel for private(i, j, k)
+//   for(i = 0; i < n; i+=BLOCK_SIZE){
+//     for(j = 0; j < n; j+=BLOCK_SIZE){
+//       for(k = 0; k <n; k+=BLOCK_SIZE){
+//         do_block_float(i, j, k, A, B, C, n, BLOCK_SIZE);
+//       }
+//     }
+//   }
+//   return result;
+// }
+
+
+// Matrix<double> multiplyMatricesOMP(Matrix<double> a,
+//                                    Matrix<double> b,
+//                                    int num_threads) {
+//   /* REPLACE THE CODE IN THIS FUNCTION WITH YOUR OWN CODE */
+//   /* YOU MUST USE OPENMP HERE */
+//   uint32_t n = a.rows;
+//   int BLOCK_SIZE = n;
+//   if (n >= 32) {
+//     BLOCK_SIZE = 32;
+//   }
+//   auto result = Matrix<double>(n, n);
+//   double *A = &a[0];
+//   double *B = &b[0];
+//   double *C = &result[0];
+//   uint32_t i, j, k;
+//   omp_set_num_threads(num_threads);
+//   #pragma omp parallel for private(i, j, k)
+//   for(i = 0; i < n; i+=BLOCK_SIZE){
+//     for(j = 0; j < n; j+=BLOCK_SIZE){
+//       for(k = 0; k <n; k+=BLOCK_SIZE){
+//         do_block_double(i, j, k, A, B, C, n, BLOCK_SIZE);
+//       }
+//     }
+//   }
+//   return result;
+//   }
+// #pragma GCC pop_options
+
