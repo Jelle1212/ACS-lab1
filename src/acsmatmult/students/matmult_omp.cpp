@@ -49,14 +49,14 @@
 //   return;
 // }
 
-Matrix<float> multiplyMatricesOMP(Matrix<float> a,
-                                  Matrix<float> b,
-                                  int num_threads) {
+// Matrix<float> multiplyMatricesOMP(Matrix<float> a,
+//                                   Matrix<float> b,
+//                                   int num_threads) {
       
   /* REPLACE THE CODE IN THIS FUNCTION WITH YOUR OWN CODE */
   /* YOU MUST USE OPENMP HERE */
-  uint32_t N = a.rows;
-  auto result = Matrix<float>(N, N);
+  // uint32_t N = a.rows;
+  // auto result = Matrix<float>(N, N);
   // auto b_tran = Matrix<float>(N, N);
 
   // for(uint32_t n = 0; n < (N*N); n++) {
@@ -71,42 +71,42 @@ Matrix<float> multiplyMatricesOMP(Matrix<float> a,
   // b.print();
   // printf("B^t: ");
   // b_tran.print();
-  uint32_t i, j, k;
-  omp_set_num_threads(num_threads);
-  #pragma omp parallel for shared(result) private(i, j, k)
-  for(i = 0; i < N; i++){
-    for(j = 0; j < N; j++){
-      float val = 0;
-      for(k = 0; k <N; k++){
-        val += a[i * N + k] * b[k * N + j];
-      }
-      result[i *N + j] = val;
-    }
-  }
-  return result;
-}
-
-// Matrix<float> multiplyMatricesOMP(Matrix<float> a,
-//                                   Matrix<float> b,
-//                                   int num_threads) {
-      
-//   /* REPLACE THE CODE IN THIS FUNCTION WITH YOUR OWN CODE */
-//   /* YOU MUST USE OPENMP HERE */
-//   uint32_t n = a.rows;
-//   auto result = Matrix<float>(n, n);
-  
 //   uint32_t i, j, k;
 //   omp_set_num_threads(num_threads);
 //   #pragma omp parallel for shared(result) private(i, j, k)
-//   for(i = 0; i < n; i++){
-//     for(j = 0; j < n; j++){
-//       for(k = 0; k <n; k++){
-//         result(i, j) += a(i, k) * b(k, j);
+//   for(i = 0; i < N; i++){
+//     for(j = 0; j < N; j++){
+//       float val = 0;
+//       for(k = 0; k <N; k++){
+//         val += a[i * N + k] * b[k * N + j];
 //       }
+//       result[i *N + j] = val;
 //     }
 //   }
 //   return result;
 // }
+
+Matrix<float> multiplyMatricesOMP(Matrix<float> a,
+                                  Matrix<float> b,
+                                  int num_threads) {
+      
+  /* REPLACE THE CODE IN THIS FUNCTION WITH YOUR OWN CODE */
+  /* YOU MUST USE OPENMP HERE */
+  uint32_t n = a.rows;
+  auto result = Matrix<float>(n, n);
+  
+  uint32_t i, j, k;
+  omp_set_num_threads(num_threads);
+  #pragma omp parallel for shared(result) private(i, j, k)
+  for(i = 0; i < n; i++){
+    for(j = 0; j < n; j++){
+      for(k = 0; k <n; k++){
+        result(i, j) += a(i, k) * b(k, j);
+      }
+    }
+  }
+  return result;
+}
 
 Matrix<double> multiplyMatricesOMP(Matrix<double> a,
                                    Matrix<double> b,
