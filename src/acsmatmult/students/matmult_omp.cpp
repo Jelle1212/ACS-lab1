@@ -42,16 +42,18 @@ Matrix<float> multiplyMatricesOMP(Matrix<float> a,
   omp_set_num_threads(num_threads);
   #pragma omp parallel shared(C) private(i,j,k)
   {
-    #pragma omp for schedule(static)
-      for(i = 0; i < n; i++){
-        for(j = 0; j < n; j++){
-          float res = 0;
-          for(k = 0; k < n; k++){
-            res += A[i*n + k] * B[j*n + k];
-          }
-          C[i*n + j] = res;
+    for(i = 0; i < n; i++){
+      for(j = 0; j < n; j++){
+        auto sum = _mm256_setzero_ps();
+        for(k = 0; k < n; k += 8){
+          auto bc_mat1 = _mm256_set1_ps(*A+(i*n)+k);
+          auto vec_mat2 = _mm256_load_ps(B+(j*n)+k);
+          auto prod = _mm256_mul_ps(bc_mat1, vec_mat2);
+          sum = _mm256_add_ps(sum, prod);
         }
+        _mm256_store_ps(&C[i*n + j], sum); 
       }
+    }
   }
   return result;
 }
@@ -73,16 +75,18 @@ Matrix<double> multiplyMatricesOMP(Matrix<double> a,
   omp_set_num_threads(num_threads);
   #pragma omp parallel shared(C) private(i,j,k)
   {
-    #pragma omp for schedule(static)
-      for(i = 0; i < n; i++){
-        for(j = 0; j < n; j++){
-          float res = 0;
-          for(k = 0; k < n; k++){
-            res += A[i*n + k] * B[j*n + k];
-          }
-          C[i*n + j] = res;
+    for(i = 0; i < n; i++){
+      for(j = 0; j < n; j++){
+        auto sum = _mm256_setzero_pd();
+        for(k = 0; k < n; k += n){
+          auto bc_mat1 = _mm256_set1_pd(*A+(i*n)+k);
+          auto vec_mat2 = _mm256_load_pd(B+(j*n)+k);
+          auto prod = _mm256_mul_pd(bc_mat1, vec_mat2);
+          sum = _mm256_add_pd(sum, prod);
         }
+        _mm256_store_pd(&C[i*n + j], sum); 
       }
+    }
   }
   return result;
 }
