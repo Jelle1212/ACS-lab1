@@ -33,9 +33,9 @@ Matrix<float> multiplyMatricesOMP(Matrix<float> a,
   uint32_t n = a.rows;
   auto result = Matrix<float>(n, n);
 
- float * A = (float *) aligned_alloc(n*n, sizeof(float) * n*n);
- float * B = (float *) aligned_alloc(n*n, sizeof(float) * n*n);
- float * C = (float *) aligned_alloc(n*n, sizeof(float) * n*n);
+ float * A = (float *) aligned_alloc(n, sizeof(float) * n);
+ float * B = (float *) aligned_alloc(n, sizeof(float) * n);
+ float * C = (float *) aligned_alloc(n, sizeof(float) * n);
   
   A = &a[0];
   B = &b[0];
@@ -52,11 +52,11 @@ Matrix<float> multiplyMatricesOMP(Matrix<float> a,
         auto sum = _mm256_setzero_ps();
         for(k = 0; k < n; k += 8){
           auto bc_mat1 = _mm256_set1_ps(*A+(i*n)+k);
-          auto vec_mat2 = _mm256_loadu_ps(B+(j*n)+k);
+          auto vec_mat2 = _mm256_load_ps(B+(j*n)+k);
           auto prod = _mm256_mul_ps(bc_mat1, vec_mat2);
           sum = _mm256_add_ps(sum, prod);
         }
-        C[i*n +j] = _mm256_cvtss_f32(sum);
+        //_mm256_storeu_si256((__m256i*)&C[i*n + j], sum); 
       }
     }
   }
