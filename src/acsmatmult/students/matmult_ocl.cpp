@@ -49,7 +49,7 @@ static std::vector<cl_device_id> discoverDevices(cl_platform_id platform_id) {
   // https://www.khronos.org/registry/OpenCL/sdk/1.2/docs/man/xhtml/clGetDeviceIDs.html
   int err = clGetDeviceIDs(platform_id, CL_DEVICE_TYPE_GPU, 0, nullptr, &num_devices);
 
-  //std::cout << "\tDevices: " << num_devices << std::endl;
+  std::cout << "\tDevices: " << num_devices << std::endl;
 
   if ((err != CL_DEVICE_NOT_FOUND) || (num_devices != 0)) {
     // Get the devices of this type and insert them into the final list
@@ -73,7 +73,12 @@ static std::vector<cl_device_id> discoverDevices(cl_platform_id platform_id) {
         CHECK(clGetDeviceInfo(platform_type_device, info_queries[i], 0, nullptr, &info_size));
         auto query = new char[info_size];
         CHECK(clGetDeviceInfo(platform_type_device, info_queries[i], info_size, query, &info_size));
-
+        switch (info_types[i]) {
+          case ClInfoType::SIZE_T: std::cout << *reinterpret_cast<size_t *>(query) << std::endl;
+            break;
+          default:std::cout << query << std::endl;
+            break;
+        }
         delete[] query;
 
       }
@@ -93,7 +98,7 @@ static std::vector<cl_platform_id> discoverPlatforms() {
   // OpenCL sometimes outputs some stuff on cerr. Flush this stuff from the stream.
   std::cerr.flush();
 
-  //std::cout << "Found " << num_platforms << " OpenCL platform(s)." << std::endl;
+  std::cout << "Found " << num_platforms << " OpenCL platform(s)." << std::endl;
 
   // Create an array to hold platform IDs.
   auto platform_ids = std::vector<cl_platform_id>(num_platforms);
@@ -106,7 +111,7 @@ static std::vector<cl_platform_id> discoverPlatforms() {
 
   // Iterate over all platforms
   for (unsigned int p = 0; p < num_platforms; p++) {
-    //std::cout << "Platform " << p << std::endl;
+    std::cout << "Platform " << p << std::endl;
 
     // Iterate over all platform infos we want to inquire
     for (auto platform_query : platform_queries) {
@@ -119,7 +124,7 @@ static std::vector<cl_platform_id> discoverPlatforms() {
       // Get the actual info
       CHECK(clGetPlatformInfo(platform_ids[p], platform_query, query_size, query, &query_size));
 
-      //std::cout << '\t' << query << std::endl;
+      std::cout << '\t' << query << std::endl;
 
       delete[] query;
     }
@@ -140,7 +145,7 @@ Matrix<float> multiplyMatricesOCL(Matrix<float> a,
 
   /* Example code partially inspired by: https://www.olcf.ornl.gov/tutorials/opencl-vector-addition/ */
 
-  //std::cout << "OpenCL test." << std::endl;
+  std::cout << "OpenCL test." << std::endl;
 
   // Create a little variable to store OpenCL error codes.
   int err;
@@ -259,10 +264,10 @@ Matrix<float> multiplyMatricesOCL(Matrix<float> a,
   clReleaseContext(context);
 
   // Print the results
-  /*std::cout << "OpenCL results: " << std::endl;
+  std::cout << "OpenCL results: " << std::endl;
   for (auto val : host_result) {
     std::cout << val << std::endl;
-  }*/
+  }
 
   return Matrix<float>(1, 1);
 }
