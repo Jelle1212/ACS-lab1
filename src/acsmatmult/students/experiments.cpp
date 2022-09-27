@@ -282,8 +282,8 @@ void runMatrixExperimentOMP(unsigned int min,
                             unsigned int repeats,
                             const std::string &file_out) {
 
-  // auto mat_a = Matrix<float>(2,2);  // Make a matrix
-  // auto mat_b = Matrix<float>(2,2);  // And another one, transposed.
+  // auto mat_a = Matrix<float>(9,9);  // Make a matrix
+  // auto mat_b = Matrix<float>(9,9);  // And another one, transposed.
 
   // mat_a.randomize();
   // mat_b.randomize();
@@ -361,7 +361,7 @@ void runMatrixExperimentOMP(unsigned int min,
     // Repeat the doubles experiment repeats times.
     for (unsigned int r = 0; r < repeats; r++) {
       t.start();
-      auto mat_result = multiplyMatricesOMP(mat_a, mat_b, threads);
+      auto mat_result = multiplyMatricesOMP(mat_c, mat_d, threads);
       t.stop();
       t.report(ss, r == (repeats - 1));
       dump(ss, fos, std::cout);
