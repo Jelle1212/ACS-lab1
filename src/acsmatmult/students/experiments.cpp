@@ -370,14 +370,14 @@ void runMatrixExperimentOMP(unsigned int min,
 }
 
 void runMatrixExperimentOCL(unsigned int min, unsigned int max, unsigned int repeats, const std::string &file_out) {
-  auto mat_a = Matrix<float>(2,2);  // Make a matrix
-  auto mat_b = Matrix<float>(2,2);  // And another one, transposed.
+  // auto mat_a = Matrix<float>(2,2);  // Make a matrix
+  // auto mat_b = Matrix<float>(2,2);  // And another one, transposed.
 
-  mat_a.randomize();
-  mat_b.randomize();
+  // mat_a.randomize();
+  // mat_b.randomize();
 
-  auto result = Matrix<float>::multiply(mat_a, mat_b);
-  auto test = multiplyMatricesOCL(mat_a, mat_b);
-  result.print();
-  test.print();
+  // auto result = Matrix<float>::multiply(mat_a, mat_b);
+  // auto test = multiplyMatricesOCL(mat_a, mat_b);
+  // result.print();
+  // test.print();
 }
