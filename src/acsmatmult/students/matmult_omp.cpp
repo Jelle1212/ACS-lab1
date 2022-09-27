@@ -300,6 +300,6 @@ Matrix<double> multiplyMatricesOMP(Matrix<double> a,
 //     }
 //     return result;
 //   }
-#pragma GCC pop_options
+// #pragma GCC pop_options
 
 
