@@ -406,9 +406,9 @@ void runMatrixExperimentOCL(unsigned int min, unsigned int max, unsigned int rep
     // In this experiment, we use powers of 2 as the problem size.
     // Not that that is not always necessary. You may also linearly grow the problem size.
     // Shift a long value of 1 left by e, which is the same as 2^e, to obtain the matrix dimension
-    auto mat_rows = 1ul << e;
+    auto mat_rows = 8ul << e;
     // Number of columns is 1 for now, because we just want to calculate the inner product.
-    auto mat_cols = 1ul << e;
+    auto mat_cols = 8ul << e;
     // Print experiment number
     ss << std::setw(15) << (std::to_string(e) + ",");
     // Print the problem size

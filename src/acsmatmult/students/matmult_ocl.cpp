@@ -267,7 +267,8 @@ Matrix<float> multiplyMatricesOCL(Matrix<float> a,
 
 
   // The number of items to work on in a local in every local work group.
-  size_t local_size[2] = {1,1};
+  size_t local_size[2] = {2,2};
+
   // The number of items to work on globally. Make sure that this is an integer multiple of local_size.
   size_t global_size[2] = {colC,rowC};
 
@@ -380,7 +381,6 @@ Matrix<double> multiplyMatricesOCL(Matrix<double> a,
   }
 
   // And build the program
-  clBuildProgram(program, 0, nullptr, nullptr, nullptr, nullptr);
   ret = clBuildProgram(program, 0, nullptr, nullptr, nullptr, nullptr);
   if(ret != CL_SUCCESS) {
       printf("Failed to build program. \n");
