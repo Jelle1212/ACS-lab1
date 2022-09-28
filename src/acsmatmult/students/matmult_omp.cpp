@@ -53,6 +53,8 @@ typedef union _avx {
 //   return;
 // }
 
+
+
 Matrix<float> multiplyMatricesOMP(Matrix<float> a,
                                   Matrix<float> b,
                                   int num_threads) {
@@ -65,17 +67,14 @@ Matrix<float> multiplyMatricesOMP(Matrix<float> a,
   float *B = &b[0];
   float *C = &res[0];
 
-
   uint32_t n = a.rows;
   uint32_t i, j, k;
-  #pragma omp parallel for schedule(static) num_threads(num_threads) shared(A, B, C) private(i, j, k)
+  #pragma omp parallel for num_threads(num_threads) shared(A, B, C, n) private(i, j, k)
     for(i = 0; i < a.rows; i++){
       for(j = 0; j < b.columns; j++){
-        float val = 0;
         for(k = 0; k < a.columns; k++){
-          val += A[i*n + k]*B[k*n+j];
+          C[i*n+j] += A[i*n + k]*B[k*n+j];
         }
-        C[i*n+j] = val;
       }
     }
   return res;
@@ -100,14 +99,12 @@ Matrix<double> multiplyMatricesOMP(Matrix<double> a,
 
   uint32_t n = a.rows;
   uint32_t i, j, k;
-  #pragma omp parallel for schedule(static) num_threads(num_threads) shared(A, B, C) private(i, j, k)
+  #pragma omp parallel for num_threads(num_threads) shared(A, B, C) private(i, j, k) 
     for(i = 0; i < a.rows; i++){
       for(j = 0; j < b.columns; j++){
-        double val = 0;
         for(k = 0; k < a.columns; k++){
-          val += A[i*n + k]*B[k*n+j];
+          C[i*n+j] += A[i*n + k]*B[k*n+j];
         }
-        C[i*n+j] = val;
       }
     }
   return res;
