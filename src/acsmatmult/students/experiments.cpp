@@ -370,19 +370,33 @@ void runMatrixExperimentOMP(unsigned int min,
 }
 
 void runMatrixExperimentOCL(unsigned int min, unsigned int max, unsigned int repeats, const std::string &file_out) {
-  std::ofstream fos(file_out);
+       /*auto mat_a = Matrix<float>(4,3);
+       auto mat_b = Matrix<float>(5,3);
+    
+       mat_a.randomize();
+       mat_b.randomize();
+    
+       auto result = Matrix<float>::multiply(mat_a, mat_b);
+       auto test = multiplyMatricesOCL(mat_a, mat_b);
+       printf("Benchmark");
+       result.print();
+       printf("OpenCL");
+       test.print(); */
+    
+    
+    std::ofstream fos(file_out);
   if (!fos.good()) {
     std::cerr << "Could not open file " + file_out << std::endl;
     std::exit(-1);
   }
   // Generate a stringstream to write output to both stdout and a file
   std::stringstream ss;
- 
+
   // Create a timer used for wall-clock time measurements
   Timer t;
   // Dump a header
   generateHeader(ss,
-                 {"Experiment", "Threads","Matrix size", "Construct (s)", "Randomize (s)"},
+                 {"Experiment", "Matrix size", "Construct (s)", "Randomize (s)"},
                  {"Float", "Double"},
                  repeats);
   dump(ss, fos, std::cout);
@@ -397,8 +411,6 @@ void runMatrixExperimentOCL(unsigned int min, unsigned int max, unsigned int rep
     auto mat_cols = 1ul << e;
     // Print experiment number
     ss << std::setw(15) << (std::to_string(e) + ",");
-
-    
     // Print the problem size
     ss << std::setw(15) << (std::to_string(mat_rows) + ",") << std::flush;
 
