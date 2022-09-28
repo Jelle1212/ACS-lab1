@@ -49,7 +49,7 @@ static std::vector<cl_device_id> discoverDevices(cl_platform_id platform_id) {
   // https://www.khronos.org/registry/OpenCL/sdk/1.2/docs/man/xhtml/clGetDeviceIDs.html
   int err = clGetDeviceIDs(platform_id, CL_DEVICE_TYPE_GPU, 0, nullptr, &num_devices);
 
-  std::cout << "\tDevices: " << num_devices << std::endl;
+  //std::cout << "\tDevices: " << num_devices << std::endl;
 
   if ((err != CL_DEVICE_NOT_FOUND) || (num_devices != 0)) {
     // Get the devices of this type and insert them into the final list
@@ -74,9 +74,9 @@ static std::vector<cl_device_id> discoverDevices(cl_platform_id platform_id) {
         auto query = new char[info_size];
         CHECK(clGetDeviceInfo(platform_type_device, info_queries[i], info_size, query, &info_size));
         switch (info_types[i]) {
-          case ClInfoType::SIZE_T: std::cout << *reinterpret_cast<size_t *>(query) << std::endl;
+          case ClInfoType::SIZE_T: ; //std::cout << *reinterpret_cast<size_t *>(query) << std::endl;
             break;
-          default:std::cout << query << std::endl;
+          default: ;//std::cout << query << std::endl;
             break;
         }
         delete[] query;
@@ -98,7 +98,7 @@ static std::vector<cl_platform_id> discoverPlatforms() {
   // OpenCL sometimes outputs some stuff on cerr. Flush this stuff from the stream.
   std::cerr.flush();
 
-  std::cout << "Found " << num_platforms << " OpenCL platform(s)." << std::endl;
+  //std::cout << "Found " << num_platforms << " OpenCL platform(s)." << std::endl;
 
   // Create an array to hold platform IDs.
   auto platform_ids = std::vector<cl_platform_id>(num_platforms);
@@ -111,7 +111,7 @@ static std::vector<cl_platform_id> discoverPlatforms() {
 
   // Iterate over all platforms
   for (unsigned int p = 0; p < num_platforms; p++) {
-    std::cout << "Platform " << p << std::endl;
+    //std::cout << "Platform " << p << std::endl;
 
     // Iterate over all platform infos we want to inquire
     for (auto platform_query : platform_queries) {
@@ -124,7 +124,7 @@ static std::vector<cl_platform_id> discoverPlatforms() {
       // Get the actual info
       CHECK(clGetPlatformInfo(platform_ids[p], platform_query, query_size, query, &query_size));
 
-      std::cout << '\t' << query << std::endl;
+      //std::cout << '\t' << query << std::endl;
 
       delete[] query;
     }
@@ -145,10 +145,24 @@ Matrix<float> multiplyMatricesOCL(Matrix<float> a,
 
   /* Example code partially inspired by: https://www.olcf.ornl.gov/tutorials/opencl-vector-addition/ */
 
-  std::cout << "OpenCL test." << std::endl;
+
+  // Create program variables
+  int colA = a.columns;
+  int rowA = a.rows;
+  int colB = b.columns;
+  int rowB = b.rows;
+
+  int colC = colB;
+  int rowC = rowA;
+
+  if(rowA != colB){
+      printf("Multiplication not possible for input matrices");
+      exit(1);
+  }
 
   // Create a little variable to store OpenCL error codes.
   int err;
+  int ret;
 
   // First, we must discover all available OpenCL platforms
   auto platforms = discoverPlatforms();
@@ -183,21 +197,35 @@ Matrix<float> multiplyMatricesOCL(Matrix<float> a,
       "__kernel void vecmult_kernel(__global float *arg0,       \n" \
           "                             __global float *arg1,   \n" \
           "                             __global float *result, \n" \
-          "                             const unsigned int size)\n" \
+          "                             int colA,               \n" \
+          "                             int colB)               \n" \
           "{                                                    \n" \
           "  // Obtain this thread ID                           \n" \
-          "  int id = get_global_id(0);                         \n" \
+          "  int col = get_global_id(0);                        \n" \
+          "  int row= get_global_id(1);                         \n" \
           "                                                     \n" \
+          "  float sum = 0.0f;                                  \n" \
           "  // Make sure this thread does not go out of bounds.\n" \
-          "  if (id < size)                                     \n" \
-          "      result[id] = arg0[id] * arg1[id];              \n" \
+          "  for(int i = 0; i < colA; i++) {                    \n" \
+          "     sum += arg0[row * colA +i] * arg1[i * colB +col]; \n" \
+          "  }                                                  \n" \
+          "  result[row * colB + col] = sum;                    \n" \
           "}                                                    \n" \
           "\n";
 
   auto program = clCreateProgramWithSource(context, 1, (const char **) &example_kernel_source, nullptr, &err);
+  if(err != CL_SUCCESS){
+      printf("failed to create program. \n");
+      exit(1);
+  }
 
   // And build the program
-  clBuildProgram(program, 0, nullptr, nullptr, nullptr, nullptr);
+  ret = clBuildProgram(program, 0, nullptr, nullptr, nullptr, nullptr);
+  if(ret != CL_SUCCESS) {
+      printf("Failed to build program. \n");
+      printf("ret: %c\n",ret);
+      exit(1);
+  }
 
   // Create a command queue
   // https://www.khronos.org/registry/OpenCL/sdk/1.2/docs/man/xhtml/clCreateCommandQueue.html
@@ -208,25 +236,25 @@ Matrix<float> multiplyMatricesOCL(Matrix<float> a,
   auto kernel = clCreateKernel(program, "vecmult_kernel", &err);
 
   // Create some example vectors
-  unsigned int vector_size = 4;
-  size_t vector_bytes = sizeof(float) * vector_size;
+  size_t matrix_bytesA = sizeof(float) * rowA * colA;
+  size_t matrix_bytesB = sizeof(float) * rowB * colB;
+  size_t matrix_bytesC = sizeof(float) * rowC * colC;
 
-  std::vector<float> host_arg0 = {0.1f, 0.3f, 0.3f, 0.7f};
-  std::vector<float> host_arg1 = {3.1f, 4.1f, 5.9f, 2.6f};
-  std::vector<float> host_result(4);
+  Matrix<float> host_arg0 = a;
+  Matrix<float> host_arg1 = b;
 
   // Create some buffers on the device to hold the data
   // https://www.khronos.org/registry/OpenCL/sdk/1.2/docs/man/xhtml/clCreateBuffer.html
-  auto device_arg0 = clCreateBuffer(context, CL_MEM_READ_ONLY, vector_bytes, nullptr, nullptr);
-  auto device_arg1 = clCreateBuffer(context, CL_MEM_READ_ONLY, vector_bytes, nullptr, nullptr);
+  auto device_arg0 = clCreateBuffer(context, CL_MEM_READ_ONLY, matrix_bytesA, nullptr, nullptr);
+  auto device_arg1 = clCreateBuffer(context, CL_MEM_READ_ONLY, matrix_bytesB, nullptr, nullptr);
   // And one output buffer
-  auto device_result = clCreateBuffer(context, CL_MEM_WRITE_ONLY, vector_bytes, nullptr, nullptr);
+  auto device_result = clCreateBuffer(context, CL_MEM_WRITE_ONLY, matrix_bytesC, nullptr, nullptr);
 
   // Enqueue transfers to write to the buffers.
   // https://www.khronos.org/registry/OpenCL/sdk/1.2/docs/man/xhtml/clEnqueueWriteBuffer.html
-  CHECK(clEnqueueWriteBuffer(queue, device_arg0, CL_TRUE, 0, vector_bytes, host_arg0.data(), 0,
+  CHECK(clEnqueueWriteBuffer(queue, device_arg0, CL_TRUE, 0, matrix_bytesA, &host_arg0[0], 0,
                              nullptr, nullptr));
-  CHECK(clEnqueueWriteBuffer(queue, device_arg1, CL_TRUE, 0, vector_bytes, host_arg1.data(), 0,
+  CHECK(clEnqueueWriteBuffer(queue, device_arg1, CL_TRUE, 0, matrix_bytesB, &host_arg1[0], 0,
                              nullptr, nullptr));
 
   // Ready the kernel for computation. We must first set its arguments
@@ -234,25 +262,32 @@ Matrix<float> multiplyMatricesOCL(Matrix<float> a,
   CHECK(clSetKernelArg(kernel, 0, sizeof(cl_mem), &device_arg0));
   CHECK(clSetKernelArg(kernel, 1, sizeof(cl_mem), &device_arg1));
   CHECK(clSetKernelArg(kernel, 2, sizeof(cl_mem), &device_result));
-  CHECK(clSetKernelArg(kernel, 3, sizeof(unsigned int), &vector_size));
+  CHECK(clSetKernelArg(kernel, 3, sizeof(cl_int), &colA));
+  CHECK(clSetKernelArg(kernel, 4, sizeof(cl_int), &colB));
+
 
   // The number of items to work on in a local in every local work group.
-  size_t local_size = 1;
+  size_t local_size[2] = {1,1};
   // The number of items to work on globally. Make sure that this is an integer multiple of local_size.
-  size_t global_size = vector_size;
+  size_t global_size[2] = {colC,rowC};
 
   // Enqueue the execution of the kernel.
   // DISCLAIMER: IF SO FAR YOU HAVE NOT READ ANY API DOCUMENTATION, THIS IS A GREAT TIME TO START DOING SO
   // THIS IS AN IMPORTANT FUNCTION AND ITS PARAMETERS WILL INFLUENCE THE PERFORMANCE OF YOUR IMPLEMENTATION GREATLY.
   // https://www.khronos.org/registry/OpenCL/sdk/1.0/docs/man/xhtml/clEnqueueNDRangeKernel.html
-  CHECK(clEnqueueNDRangeKernel(queue, kernel, 1, nullptr, &global_size, &local_size, 0, nullptr, nullptr));
+  CHECK(clEnqueueNDRangeKernel(queue, kernel, 2, nullptr, global_size, local_size, 0, nullptr, nullptr));
 
   // Wait for the queue to finish...
   clFinish(queue);
 
   // Read the results back, from device to host
   // https://www.khronos.org/registry/OpenCL/sdk/1.2/docs/man/xhtml/clEnqueueReadBuffer.html
-  CHECK(clEnqueueReadBuffer(queue, device_result, CL_TRUE, 0, vector_bytes, host_result.data(), 0, nullptr, nullptr));
+  Matrix<float> host_result = Matrix<float>(rowA, colB);
+  cl_int x = clEnqueueReadBuffer(queue, device_result, CL_TRUE, 0, matrix_bytesC, &host_result[0], 0, nullptr, nullptr);
+  if(x != CL_SUCCESS){
+      printf("Result buffer read failed.\n");
+      exit(1);
+  }
 
   // Clean up all the resources we've used.
   clReleaseMemObject(device_arg0);
@@ -263,20 +298,169 @@ Matrix<float> multiplyMatricesOCL(Matrix<float> a,
   clReleaseCommandQueue(queue);
   clReleaseContext(context);
 
-  // Print the results
-  std::cout << "OpenCL results: " << std::endl;
-  for (auto val : host_result) {
-    std::cout << val << std::endl;
-  }
 
-  return Matrix<float>(1, 1);
+  return host_result;
 }
 
 Matrix<double> multiplyMatricesOCL(Matrix<double> a,
                                    Matrix<double> b) {
   /* REPLACE THE CODE IN THIS FUNCTION WITH YOUR OWN CODE */
   /* YOU MUST USE OPENCL HERE */
-  return Matrix<double>(1, 1);
+  // Create program variables
+  int colA = a.columns;
+  int rowA = a.rows;
+  int colB = b.columns;
+  int rowB = b.rows;
+
+  int colC = colB;
+  int rowC = rowA;
+
+  if(rowA != colB){
+      printf("Multiplication not possible for input matrices");
+      exit(1);
+  }
+
+  // Create a little variable to store OpenCL error codes.
+  int err;
+  int ret;
+
+  // First, we must discover all available OpenCL platforms
+  auto platforms = discoverPlatforms();
+
+  // If there are any platforms
+  if (platforms.empty()) {
+    throw std::runtime_error("No OpenCL platforms detected.");
+  }
+
+  // Discover the devices on the first platform.
+  // Running on the cluster node should give you only one platform.
+  // Be aware that your local setup might be different.
+  auto devices = discoverDevices(platforms[0]);
+
+  // If there are any devices
+  if (devices.empty()) {
+    throw std::runtime_error("No OpenCL devices detected.");
+  }
+
+  // Create an OpenCL context.
+  // https://www.khronos.org/registry/OpenCL/sdk/1.2/docs/man/xhtml/clCreateContext.html
+  // We will let the implementation of this function automatically select the platform, so
+  // the first argument is a nullptr. We will use the first device only. so the number of devices is 1. You should
+  // not ever diverge from this during the lab. We will not use a callback function with any user data, so the next two
+  // arguments are both nullptrs. Finally we let the function return any error code into err.
+  auto context = clCreateContext(nullptr, 1, &devices[0], nullptr, nullptr, &err);
+
+  // Create an OpenCL program from some source that does element wise vector multiplication.
+  // https://www.khronos.org/registry/OpenCL/sdk/1.2/docs/man/xhtml/clCreateProgramWithSource.html
+  // Obviously, it would be prettier if this came from some file.
+  auto example_kernel_source =
+      "__kernel void vecmult_kernel(__global float *arg0,       \n" \
+          "                             __global float *arg1,   \n" \
+          "                             __global float *result, \n" \
+          "                             int colA,               \n" \
+          "                             int colB)               \n" \
+          "{                                                    \n" \
+          "  // Obtain this thread ID                           \n" \
+          "  int col = get_global_id(0);                        \n" \
+          "  int row= get_global_id(1);                         \n" \
+          "                                                     \n" \
+          "  float sum = 0.0f;                                  \n" \
+          "  // Make sure this thread does not go out of bounds.\n" \
+          "  for(int i = 0; i < colA; i++) {                    \n" \
+          "     sum += arg0[row * colA +i] * arg1[i * colB +col]; \n" \
+          "  }                                                  \n" \
+          "  result[row * colB + col] = sum;                    \n" \
+          "}                                                    \n" \
+          "\n";
+
+  auto program = clCreateProgramWithSource(context, 1, (const char **) &example_kernel_source, nullptr, &err);
+  if(err != CL_SUCCESS){
+      printf("failed to create program. \n");
+      exit(1);
+  }
+
+  // And build the program
+  clBuildProgram(program, 0, nullptr, nullptr, nullptr, nullptr);
+  ret = clBuildProgram(program, 0, nullptr, nullptr, nullptr, nullptr);
+  if(ret != CL_SUCCESS) {
+      printf("Failed to build program. \n");
+      printf("ret: %c\n",ret);
+      exit(1);
+  }
+
+  // Create a command queue
+  // https://www.khronos.org/registry/OpenCL/sdk/1.2/docs/man/xhtml/clCreateCommandQueue.html
+  auto queue = clCreateCommandQueue(context, devices[0], 0, &err);
+
+  // Create the OpenCL kernel "object" that can be sent to the device.
+  // https://www.khronos.org/registry/OpenCL/sdk/1.2/docs/man/xhtml/clCreateKernel.html
+  auto kernel = clCreateKernel(program, "vecmult_kernel", &err);
+
+  // Create some example vectors
+  size_t matrix_bytesA = sizeof(double) * rowA * colA;
+  size_t matrix_bytesB = sizeof(double) * rowB * colB;
+  size_t matrix_bytesC = sizeof(double) * rowC * colC;
+
+  Matrix<double> host_arg0 = a;
+  Matrix<double> host_arg1 = b;
+
+  // Create some buffers on the device to hold the data
+  // https://www.khronos.org/registry/OpenCL/sdk/1.2/docs/man/xhtml/clCreateBuffer.html
+  auto device_arg0 = clCreateBuffer(context, CL_MEM_READ_ONLY, matrix_bytesA, nullptr, nullptr);
+  auto device_arg1 = clCreateBuffer(context, CL_MEM_READ_ONLY, matrix_bytesB, nullptr, nullptr);
+  // And one output buffer
+  auto device_result = clCreateBuffer(context, CL_MEM_WRITE_ONLY, matrix_bytesC, nullptr, nullptr);
+
+  // Enqueue transfers to write to the buffers.
+  // https://www.khronos.org/registry/OpenCL/sdk/1.2/docs/man/xhtml/clEnqueueWriteBuffer.html
+  CHECK(clEnqueueWriteBuffer(queue, device_arg0, CL_TRUE, 0, matrix_bytesA, &host_arg0[0], 0,
+                             nullptr, nullptr));
+  CHECK(clEnqueueWriteBuffer(queue, device_arg1, CL_TRUE, 0, matrix_bytesB, &host_arg1[0], 0,
+                             nullptr, nullptr));
+
+  // Ready the kernel for computation. We must first set its arguments
+  // https://www.khronos.org/registry/OpenCL/sdk/1.2/docs/man/xhtml/clSetKernelArg.html
+  CHECK(clSetKernelArg(kernel, 0, sizeof(cl_mem), &device_arg0));
+  CHECK(clSetKernelArg(kernel, 1, sizeof(cl_mem), &device_arg1));
+  CHECK(clSetKernelArg(kernel, 2, sizeof(cl_mem), &device_result));
+  CHECK(clSetKernelArg(kernel, 3, sizeof(cl_int), &colA));
+  CHECK(clSetKernelArg(kernel, 4, sizeof(cl_int), &colB));
+
+
+  // The number of items to work on in a local in every local work group.
+  size_t local_size[2] = {2,2};
+  // The number of items to work on globally. Make sure that this is an integer multiple of local_size.
+  size_t global_size[2] = {colC,rowC};
+
+  // Enqueue the execution of the kernel.
+  // DISCLAIMER: IF SO FAR YOU HAVE NOT READ ANY API DOCUMENTATION, THIS IS A GREAT TIME TO START DOING SO
+  // THIS IS AN IMPORTANT FUNCTION AND ITS PARAMETERS WILL INFLUENCE THE PERFORMANCE OF YOUR IMPLEMENTATION GREATLY.
+  // https://www.khronos.org/registry/OpenCL/sdk/1.0/docs/man/xhtml/clEnqueueNDRangeKernel.html
+  CHECK(clEnqueueNDRangeKernel(queue, kernel, 2, nullptr, global_size, local_size, 0, nullptr, nullptr));
+
+  // Wait for the queue to finish...
+  clFinish(queue);
+
+  // Read the results back, from device to host
+  // https://www.khronos.org/registry/OpenCL/sdk/1.2/docs/man/xhtml/clEnqueueReadBuffer.html
+  Matrix<double> host_result = Matrix<double>(rowA, colB);
+  cl_int x = clEnqueueReadBuffer(queue, device_result, CL_TRUE, 0, matrix_bytesC, &host_result[0], 0, nullptr, nullptr);
+  if(x != CL_SUCCESS){
+      printf("Result buffer read failed.\n");
+      exit(1);
+  }
+
+  // Clean up all the resources we've used.
+  clReleaseMemObject(device_arg0);
+  clReleaseMemObject(device_arg1);
+  clReleaseMemObject(device_result);
+  clReleaseProgram(program);
+  clReleaseKernel(kernel);
+  clReleaseCommandQueue(queue);
+  clReleaseContext(context);
+
+
+  return host_result;
 }
 
 /*************************************/

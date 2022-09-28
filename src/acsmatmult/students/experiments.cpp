@@ -397,6 +397,8 @@ void runMatrixExperimentOCL(unsigned int min, unsigned int max, unsigned int rep
     auto mat_cols = 1ul << e;
     // Print experiment number
     ss << std::setw(15) << (std::to_string(e) + ",");
+
+    
     // Print the problem size
     ss << std::setw(15) << (std::to_string(mat_rows) + ",") << std::flush;
 
