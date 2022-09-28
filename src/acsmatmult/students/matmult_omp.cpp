@@ -68,7 +68,7 @@ Matrix<float> multiplyMatricesOMP(Matrix<float> a,
 
   uint32_t n = a.rows;
   uint32_t i, j, k;
-  #pragma omp parallel for schedule(dynamic) num_threads(num_threads) shared(A, B, C) private(i, j, k)
+  #pragma omp parallel for schedule(guided) num_threads(num_threads) shared(A, B, C) private(i, j, k)
     for(i = 0; i < a.rows; i++){
       for(j = 0; j < b.columns; j++){
         float val = 0;
@@ -100,7 +100,7 @@ Matrix<double> multiplyMatricesOMP(Matrix<double> a,
 
   uint32_t n = a.rows;
   uint32_t i, j, k;
-  #pragma omp parallel for schedule(dynamic) num_threads(num_threads) shared(A, B, C) private(i, j, k)
+  #pragma omp parallel for schedule(guided) num_threads(num_threads) shared(A, B, C) private(i, j, k)
     for(i = 0; i < a.rows; i++){
       for(j = 0; j < b.columns; j++){
         double val = 0;
