@@ -68,7 +68,6 @@ Matrix<float> multiplyMatricesSIMD(Matrix<float> a, Matrix<float> b) {
   // matrix_BT.print();
   int full_count = matrix_BT.rows/4;
   int rest_count = matrix_BT.rows%4;
-  #pragma omp for private(i, j, k)
   for(i = 0; i < a.rows; i++){
     for(j = 0; j < matrix_BT.rows; j++){
       float res = 0;
