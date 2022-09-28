@@ -282,8 +282,8 @@ void runMatrixExperimentOMP(unsigned int min,
                             unsigned int repeats,
                             const std::string &file_out) {
 
-  // auto mat_a = Matrix<float>(9,9);  // Make a matrix
-  // auto mat_b = Matrix<float>(9,9);  // And another one, transposed.
+  // auto mat_a = Matrix<float>(4,4);  // Make a matrix
+  // auto mat_b = Matrix<float>(4,4);  // And another one, transposed.
 
   // mat_a.randomize();
   // mat_b.randomize();
